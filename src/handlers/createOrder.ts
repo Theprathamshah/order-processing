@@ -1,4 +1,6 @@
+import { Ordering } from 'effect/src/Ordering';
 import z from 'zod';
+import { Order, creatOrderModel } from '../models/OrderModel';
 
 const orderSchema = z.object({ 
     price: z.number(),
@@ -14,20 +16,21 @@ const orderSchema = z.object({
 
 export type OrderType = z.infer<typeof orderSchema>;
 class CreateBookHandler {
-    constructor() {}
+    constructor(private readonly orderModel: Order) {
+    }
 
     async process(event:any) {
         console.log('Event: ', event);
         const body = JSON.parse(event.body);
 
         //validation 
-        orderSchema.parse(body);
-
+        const data = orderSchema.parse(body);
+        const order = await this.orderModel.createOrder(data);
         return {
             statusCode: 200,
             body: JSON.stringify(
                 {
-                    message: 'create order api called'
+                    data: order
                 },
                 null,
                 2
@@ -38,7 +41,8 @@ class CreateBookHandler {
 
 export const handler = async (event:any) => {
     try {
-        const instance = new CreateBookHandler();
+        const orderInstance = creatOrderModel();
+        const instance = new CreateBookHandler(orderInstance);
         return await instance.process(event);
     } catch (error) {
         console.error('Error: ', error);

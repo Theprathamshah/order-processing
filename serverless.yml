@@ -18,42 +18,42 @@ custom:
 
 functions:
   healthCheck:
-    handler: handlers/healthCheck.handler
+    handler: src/handlers/healthCheck.handler
     description: Health check endpoint
     events:
       - http:
           path: /health
           method: get
   getOrders:
-    handler: handlers/getOrders.handler
+    handler: src/handlers/getOrders.handler
     description: Get all orders
     events:
       - http:
           path: /orders
           method: get
   getOrderById:
-    handler: handlers/getOrderById.handler
+    handler: src/handlers/getOrderById.handler
     description: Get order by id
     events:
       - http:
           path: /orders/{id}
           method: get
   updateOrderById:
-    handler: handlers/updateOrderById.handler
+    handler: src/handlers/updateOrderById.handler
     description: Update order by id
     events:
       - http: 
           path: /orders/{id}
           method: put
   createOrder:
-    handler: handlers/createOrder.handler
+    handler: src/handlers/createOrder.handler
     description: Create order
     events:
       - http:
           path: /orders
           method: post
   deleteOrderById:
-    handler: handlers/deleteOrderById.handler
+    handler: src/handlers/deleteOrderById.handler
     description: Delete order by id
     events:
       - http:

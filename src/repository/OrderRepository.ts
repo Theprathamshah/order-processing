@@ -1,6 +1,6 @@
 import { OrderType } from "../handlers/createOrder";
 
-class OrderRepository {
+export class OrderRepository {
     constructor() {
 
     }
@@ -8,4 +8,8 @@ class OrderRepository {
     createOrder(order: OrderType) {
         
     }
+}
+
+export function createOrderRepository() {
+    return new OrderRepository();
 }
