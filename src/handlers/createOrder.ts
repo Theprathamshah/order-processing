@@ -27,7 +27,7 @@ class CreateBookHandler {
         const data = orderSchema.parse(body);
         const order = await this.orderModel.createOrder(data);
         return {
-            statusCode: 200,
+            statusCode: 201,
             body: JSON.stringify(
                 {
                     data: order
