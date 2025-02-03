@@ -8,6 +8,13 @@ provider:
   region: 'ap-south-1'
   memorySize: 128
   timeout: 3
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "dynamodb:*"
+          Resource: "*"
 
 custom:
   esbuild:
@@ -62,3 +69,23 @@ functions:
 
 plugins:
   - serverless-esbuild
+
+resources:
+  Resources:
+    OrdersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Orders
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        ProvisionedThroughput: 
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

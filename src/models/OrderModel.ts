@@ -19,7 +19,7 @@ export class Order {
         return await this.orderRepositoryInstance.updateOrderById(id, data);
     }
     async getAllOrders():Promise<OrderType[]> {
-        return await this.getAllOrders();
+        return await this.orderRepositoryInstance.getAllOrders();
     }
 }
 

@@ -1,4 +1,4 @@
-import { Ordering } from 'effect/src/Ordering';
+
 import z from 'zod';
 import { Order, creatOrderModel } from '../models/OrderModel';
 
@@ -10,8 +10,8 @@ const orderSchema = z.object({
     address: z.string(),
     status: z.string(),
     paymentStatus: z.string(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
 });
 
 export type OrderType = z.infer<typeof orderSchema>;
