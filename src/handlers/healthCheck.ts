@@ -3,11 +3,11 @@ export const handler = async (event) => {
     statusCode: 200,
     body: JSON.stringify(
       {
-        message: 'health check api',
+        message: "health check api",
         input: event,
       },
       null,
-      2
+      2,
     ),
   };
 };

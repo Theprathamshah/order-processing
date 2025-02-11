@@ -4,6 +4,10 @@
   "main": "index.js",
   "license": "MIT",
   "type": "module",
+  "scripts": {
+    "lint": "eslint . ",
+    "lint:fix": "eslint .  --fix"
+  },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.738.0",
     "@aws-sdk/lib-dynamodb": "^3.738.0",
@@ -14,8 +18,16 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.20.0",
     "@types/aws-lambda": "^8.10.147",
     "@types/uuid": "^10.0.0",
-    "serverless-esbuild": "^1.54.6"
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
+    "@typescript-eslint/parser": "^8.24.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.3",
+    "globals": "^15.14.0",
+    "serverless-esbuild": "^1.54.6",
+    "typescript-eslint": "^8.24.0"
   }
 }

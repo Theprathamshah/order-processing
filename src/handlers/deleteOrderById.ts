@@ -1,42 +1,52 @@
-import { creatOrderModel, Order } from "../models/OrderModel";
-class deleteOrderById {
-    constructor(private readonly orderModel: Order) {
+import { QueryCommand } from "@aws-sdk/client-dynamodb";
+import createDynamoDBClient from "../clients/dynamoDBClient";
+import { BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
 
-    }
-    async process(event:any) {
-        console.log('Event: ', event);
-        const id = event.pathParameters.id;
-        const order = await this.orderModel.deleteOrderById(id);
-        return {
-            statusCode: 200,
-            body: JSON.stringify(
-                {
-                    data: order
-                },
-                null,
-                2
-            ),
-        };
-    }
-}
+export const handler = async (event: any) => {
+  try {
+    const client = createDynamoDBClient();
+    const id = event.body?.id;
+    const queryCommand = new QueryCommand({
+      TableName: "Orders",
+      KeyConditionExpression: "PK = :pk AND SK = :sk",
+      ExpressionAttributeValues: {
+        ":pk": { S: "ORDER" },
+        ":sk": { S: `ORDER#${id}` },
+      },
+    });
 
-export const handler = async (event:any) => {
-    try {
-        const orderInstance = creatOrderModel();
-        const instance = new deleteOrderById(orderInstance);
-        return await instance.process(event);
-        
-    } catch (error) {
-        console.error('Error: ', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify(
-                {
-                    message: 'Internal server error'
-                },
-                null,
-                2
-            ),
-        };
+    const queryResult = await client.send(queryCommand);
+    console.log("Query result in delete order by id", queryResult);
+
+    if (!queryResult.Items || queryResult.Items.length === 0) {
+      throw new Error("Order not found");
     }
+    const deleteRequests = queryResult.Items.map((item) => ({
+      DeleteRequest: {
+        Key: {
+          PK: item.PK.S,
+          SK: item.SK.S,
+        },
+      },
+    }));
+
+    const batchWriteCommand = new BatchWriteCommand({
+      RequestItems: {
+        Orders: deleteRequests,
+      },
+    });
+    await client.send(batchWriteCommand);
+  } catch (error) {
+    console.error("Error: ", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify(
+        {
+          message: "Internal server error",
+        },
+        null,
+        2,
+      ),
+    };
+  }
 };
