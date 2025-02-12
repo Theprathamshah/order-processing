@@ -5,7 +5,7 @@ import { BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
 export const handler = async (event: any) => {
   try {
     const client = createDynamoDBClient();
-    const id = event.body?.id;
+    const id = event.pathParameters.id;
     const queryCommand = new QueryCommand({
       TableName: "Orders",
       KeyConditionExpression: "PK = :pk AND SK = :sk",
@@ -35,7 +35,11 @@ export const handler = async (event: any) => {
         Orders: deleteRequests,
       },
     });
-    await client.send(batchWriteCommand);
+    const result = await client.send(batchWriteCommand);
+    return {
+      statusCode: 200,
+      body: JSON.stringify(result),
+    };
   } catch (error) {
     console.error("Error: ", error);
     return {

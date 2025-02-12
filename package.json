@@ -5,6 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "deploy": "sls deploy --aws-profile ddev",
     "lint": "eslint . ",
     "lint:fix": "eslint .  --fix"
   },
