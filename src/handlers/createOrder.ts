@@ -3,7 +3,7 @@ import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuid } from "uuid";
 import createDynamoDBClient from "../clients/dynamoDBClient";
 
-const orderSchema = z.object({
+export const orderSchema = z.object({
   price: z.number(),
   quantity: z.number(),
   productId: z.string(),
@@ -35,15 +35,13 @@ export const handler = async (event: any) => {
       TableName: "Orders",
       Item: orderItem,
     });
-    console.log("Before put command execution");
     return client.send(putCommand);
-  } catch (error) {
-    console.error("Error: ", error);
+  } catch (error: unknown) {
     return {
       statusCode: 500,
       body: JSON.stringify(
         {
-          message: "Internal server error",
+          message: (error as Error).message,
         },
         null,
         2,

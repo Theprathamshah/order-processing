@@ -1,28 +1,28 @@
-import { creatOrderModel, Order } from "../models/OrderModel";
+import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import createDynamoDBClient from "../clients/dynamoDBClient";
+import { Order } from "../models/OrderModel";
 
-class getOrderByOrderId {
-  constructor(private readonly orderModel: Order) {}
-  async getOrderById(event: any) {
-    // Add your code here
-    const id = event.pathParameters.id;
-    const order = await this.orderModel.getOrderById(id);
-    return {
-      statusCode: 200,
-      body: JSON.stringify(
-        {
-          data: order,
-        },
-        null,
-        2,
-      ),
-    };
-  }
-}
 export const handler = async (event: any) => {
   try {
-    const orderInstance = creatOrderModel();
-    const instance = new getOrderByOrderId(orderInstance);
-    return await instance.getOrderById(event);
+    if (!event.pathParameters?.id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: "Missing order ID in request path" }),
+      };
+    }
+
+    const orderId = event.pathParameters.id;
+    const client = createDynamoDBClient();
+    const getCommand = new GetCommand({
+      TableName: "Orders",
+      Key: {
+        PK: "ORDER",
+        SK: `ORDER#${orderId}`,
+      },
+    });
+    const result = await client.send(getCommand);
+    console.log("Result in get order by id", result);
+    return result.Item as unknown as Order;
   } catch (error) {
     console.error("Error: ", error);
     return {

@@ -1,27 +1,16 @@
-import { creatOrderModel, Order } from "../models/OrderModel";
+import { ScanCommand } from "@aws-sdk/client-dynamodb";
+import createDynamoDBClient from "../clients/dynamoDBClient";
+import { Order } from "../models/OrderModel";
 
-class GetOrders {
-  constructor(private readonly orderModel: Order) {}
-  async getOrders(event: any) {
-    // Add your code here
-    const orders = await this.orderModel.getAllOrders();
-    return {
-      statusCode: 200,
-      body: JSON.stringify(
-        {
-          data: orders,
-        },
-        null,
-        2,
-      ),
-    };
-  }
-}
-export async function handler(event: any) {
+export async function handler() {
   try {
-    const orderInstance = creatOrderModel();
-    const instance = new GetOrders(orderInstance);
-    return await instance.getOrders(event);
+    const client = createDynamoDBClient();
+
+    const params = {
+      TableName: "Orders",
+    };
+    return (await client.send(new ScanCommand(params)))
+      .Items as unknown as Order[];
   } catch (error) {
     console.error("Error: ", error);
     return {
