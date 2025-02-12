@@ -15,6 +15,13 @@ provider:
           Action:
             - "dynamodb:*"
           Resource: "*"
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource: "*"
+  environment:
+    TABLE_NAME: Orders
+    QUEUE_URL: { Ref: OrdersQueue }
 
 custom:
   esbuild:
@@ -66,6 +73,13 @@ functions:
       - http:
           method: delete
           path: /orders/{id}
+  processOrder:
+    handler: src/handlers/processOrder.handler
+    description: Process order lambda
+    events:
+      - sqs:
+          arn: { "Fn::GetAtt": [ "OrdersQueue", "Arn" ] }
+          batchSize: 5
 
 plugins:
   - serverless-esbuild
@@ -89,3 +103,9 @@ resources:
         ProvisionedThroughput: 
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+    OrdersQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: OrdersQueue
+        VisibilityTimeout: 30
+        MessageRetentionPeriod: 86400

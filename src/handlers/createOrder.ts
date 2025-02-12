@@ -1,37 +1,48 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { v4 as uuid } from "uuid";
-import createDynamoDBClient from "../clients/dynamoDBClient";
 import z from "zod";
 
 // Order Schema Validation
 export const orderSchema = z.object({
-  price: z.number(),
-  quantity: z.number(),
-  productId: z.string(),
-  userId: z.string(),
-  address: z.string(),
-  status: z.string(),
-  paymentStatus: z.string(),
+  price: z.number().positive("Price must be greater than 0"),
+  quantity: z.number().int().positive("Quantity must be a positive integer"),
+  productId: z.string().min(1, "Product ID is required"),
+  userId: z.string().min(1, "User ID is required"),
+  address: z.string().min(5, "Address is too short"),
+  status: z.string().min(1, "Status is required"),
+  paymentStatus: z.string().min(1, "Payment status is required"),
 });
+
+const sqs = new SQSClient({});
+const QUEUE_URL = process.env.QUEUE_URL;
 
 export type OrderType = z.infer<typeof orderSchema>;
 
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-  const client = createDynamoDBClient();
+  console.log("Received order creation request");
+
+  if (!QUEUE_URL) {
+    console.error("QUEUE_URL is not defined");
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: "Internal configuration error" }),
+    };
+  }
 
   try {
     if (!event.body) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ message: "Missing request body" }),
+        body: JSON.stringify({ message: "Request body is missing" }),
       };
     }
 
     const parsedBody = orderSchema.safeParse(JSON.parse(event.body));
     if (!parsedBody.success) {
+      console.error("Validation failed:", parsedBody.error.format());
       return {
         statusCode: 400,
         body: JSON.stringify({
@@ -41,21 +52,29 @@ export const handler = async (
       };
     }
 
+    const orderId = `ORDER#${uuid()}`;
     const orderItem = {
       PK: "ORDER",
-      SK: `ORDER#${uuid()}`,
+      SK: orderId,
       ...parsedBody.data,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    await client.send(new PutCommand({ TableName: "Orders", Item: orderItem }));
+    await sqs.send(
+      new SendMessageCommand({
+        QueueUrl: QUEUE_URL,
+        MessageBody: JSON.stringify(orderItem),
+      }),
+    );
+
+    console.log(`Order ${orderId} submitted to SQS`);
 
     return {
-      statusCode: 201,
+      statusCode: 200,
       body: JSON.stringify({
-        message: "Order created successfully",
-        order: orderItem,
+        message: "Order submitted successfully",
+        orderId,
       }),
     };
   } catch (error) {
