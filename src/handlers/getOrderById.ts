@@ -1,8 +1,11 @@
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import createDynamoDBClient from "../clients/dynamoDBClient";
 import { Order } from "../models/OrderModel";
 
-export const handler = async (event: any) => {
+export const handler = async (
+  event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
   try {
     if (!event.pathParameters?.id) {
       return {
@@ -13,6 +16,7 @@ export const handler = async (event: any) => {
 
     const orderId = event.pathParameters.id;
     const client = createDynamoDBClient();
+
     const getCommand = new GetCommand({
       TableName: "Orders",
       Key: {
@@ -20,20 +24,31 @@ export const handler = async (event: any) => {
         SK: `ORDER#${orderId}`,
       },
     });
+
     const result = await client.send(getCommand);
-    console.log("Result in get order by id", result);
-    return result.Item as unknown as Order;
+
+    if (!result.Item) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ message: `Order with ID ${orderId} not found` }),
+      };
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: "Order retrieved successfully",
+        order: result.Item as Order,
+      }),
+    };
   } catch (error) {
-    console.error("Error: ", error);
+    console.error("Error retrieving order:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify(
-        {
-          message: "Internal server error",
-        },
-        null,
-        2,
-      ),
+      body: JSON.stringify({
+        message: "Internal server error",
+        error: (error as Error).message,
+      }),
     };
   }
 };

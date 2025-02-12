@@ -1,8 +1,11 @@
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import createDynamoDBClient from "../clients/dynamoDBClient";
 import { orderSchema } from "./createOrder";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
-export const handler = async (event: any) => {
+export const handler = async (
+  event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
   if (!event.pathParameters?.id) {
     return {
       statusCode: 400,
@@ -13,8 +16,10 @@ export const handler = async (event: any) => {
   const orderId = event.pathParameters.id;
   const body = JSON.parse(event.body || "{}");
 
+  console.log("body is", body);
+  console.log("id is ", orderId);
   try {
-    const data = orderSchema.partial().parse(body); // Validate input fields
+    const data = orderSchema.partial().parse(body);
     if (Object.keys(data).length === 0) {
       return {
         statusCode: 400,
@@ -24,18 +29,20 @@ export const handler = async (event: any) => {
 
     const client = createDynamoDBClient();
 
-    // Build update expressions
     const updateExpressions: string[] = [];
     const expressionAttributeValues: Record<string, any> = {};
+    const expressionAttributeNames: Record<string, string> = {};
+
     Object.entries(data).forEach(([key, value], index) => {
       const attributeKey = `#attr${index}`;
       const valueKey = `:val${index}`;
       updateExpressions.push(`${attributeKey} = ${valueKey}`);
+      expressionAttributeNames[attributeKey] = key;
       expressionAttributeValues[valueKey] = value;
     });
 
-    // Always update `updatedAt`
     updateExpressions.push("#updatedAt = :updatedAt");
+    expressionAttributeNames["#updatedAt"] = "updatedAt";
     expressionAttributeValues[":updatedAt"] = new Date().toISOString();
 
     const updateCommand = new UpdateCommand({
@@ -45,12 +52,7 @@ export const handler = async (event: any) => {
         SK: `ORDER#${orderId}`,
       },
       UpdateExpression: `SET ${updateExpressions.join(", ")}`,
-      ExpressionAttributeNames: {
-        ...Object.fromEntries(
-          Object.keys(data).map((key, index) => [`#attr${index}`, key]),
-        ),
-        "#updatedAt": "updatedAt",
-      },
+      ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: expressionAttributeValues,
       ReturnValues: "ALL_NEW",
     });
