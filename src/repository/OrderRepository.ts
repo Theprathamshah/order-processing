@@ -19,6 +19,7 @@ export type Order = {
   paymentStatus: string;
   createdAt: string;
   updatedAt: string;
+  isScript: boolean;
 };
 
 export class OrderRepository {

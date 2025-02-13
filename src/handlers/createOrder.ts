@@ -3,7 +3,7 @@ import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { v4 as uuid } from "uuid";
 import z from "zod";
 
-// Order Schema Validation
+
 export const orderSchema = z.object({
   price: z.number().positive("Price must be greater than 0"),
   quantity: z.number().int().positive("Quantity must be a positive integer"),
@@ -12,6 +12,7 @@ export const orderSchema = z.object({
   address: z.string().min(5, "Address is too short"),
   status: z.string().min(1, "Status is required"),
   paymentStatus: z.string().min(1, "Payment status is required"),
+  isScript: z.boolean().optional(),
 });
 
 const sqs = new SQSClient({});
