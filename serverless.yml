@@ -29,7 +29,10 @@ custom:
     minify: false
     sourcemap: true
     target: node20
-
+    external:
+      - mock-aws-s3
+    loader:
+      .html: file
 functions:
   healthCheck:
     handler: src/handlers/healthCheck.handler
@@ -80,7 +83,29 @@ functions:
       - sqs:
           arn: { "Fn::GetAtt": [ "OrdersQueue", "Arn" ] }
           batchSize: 5
-
+  createUser:
+    handler: src/handlers/createUser.handler
+    description: Create User lambda
+    events:
+      - http:
+          method: post
+          path: /users
+  getAllUsers:
+    handler: src/handlers/getAllUser.handler
+    description: get all users from dataase
+    events:
+      - http:
+          path: /users
+          method: get
+      
+  userLogin:
+    handler: src/handlers/login.handler
+    description: user login lambda
+    events:
+      - http:
+          path: /auth/login
+          method: post
+      
 plugins:
   - serverless-esbuild
 
@@ -103,6 +128,47 @@ resources:
         ProvisionedThroughput: 
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+    ProductsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Products
+        AttributeDefinitions:
+          - AttributeName: productId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: productId
+            KeyType: HASH
+        ProvisionedThroughput: 
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: usersTable
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        GlobalSecondaryIndexes:
+          - IndexName: EmailIndex
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+
     OrdersQueue:
       Type: AWS::SQS::Queue
       Properties:

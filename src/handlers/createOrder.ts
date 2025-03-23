@@ -3,7 +3,6 @@ import { SendMessageCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { v4 as uuid } from "uuid";
 import z from "zod";
 
-
 export const orderSchema = z.object({
   price: z.number().positive("Price must be greater than 0"),
   quantity: z.number().int().positive("Quantity must be a positive integer"),

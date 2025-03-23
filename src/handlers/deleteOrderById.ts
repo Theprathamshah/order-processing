@@ -14,7 +14,7 @@ export const handler = async (event: any) => {
         ":sk": { S: `ORDER#${id}` },
       },
     });
-
+    console.log(id);
     const queryResult = await client.send(queryCommand);
     console.log("Query result in delete order by id", queryResult);
 

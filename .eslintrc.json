@@ -24,7 +24,8 @@
         ],
         "no-console": "off",
         "indent": ["error",2],
-        "@typescript-eslint/no-explicit-any":"off"
+        "@typescript-eslint/no-explicit-any":"off",
+        "quotes": ["error", "double"]
     },
     "ignorePatterns": [
         "dist/",
